@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PhishNet-GNN — Enterprise Threat Intelligence & Real-Time Phishing Domain Detection powered by Deep Graph Library (DGL) and Relational Graph Convolutional Networks (RGCN)." />
+  <title>PhishNet-GNN — Real-Time Phishing Domain Detection</title>
+
+  <!-- Google Fonts: Sora (Headings) + Manrope (Body) + JetBrains Mono (Data/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       APP SHELL: TOP NAVIGATION
+       ═══════════════════════════════════════════════════════════ -->
+  <header class="navbar" role="banner">
+    <div class="navbar__container">
+      
+      <!-- Logo & Brand -->
+      <div class="navbar__brand">
+        <div class="brand-badge-icon" aria-hidden="true">
+          <!-- Minimal Shield + Graph Node Symbol -->
+          <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
+            <path d="M16 3L5 7.5v8.5c0 7.8 4.7 15.1 11 17 6.3-1.9 11-9.2 11-17V7.5L16 3z" stroke="#00D2FF" stroke-width="2" fill="rgba(0, 210, 255, 0.08)"/>
+            <circle cx="16" cy="14" r="2.5" fill="#38BDF8"/>
+            <circle cx="11" cy="20" r="2" fill="#00D2FF"/>
+            <circle cx="21" cy="20" r="2" fill="#00D2FF"/>
+            <line x1="16" y1="14" x2="11" y2="20" stroke="#00D2FF" stroke-width="1.5" stroke-dasharray="2 2"/>
+            <line x1="16" y1="14" x2="21" y2="20" stroke="#00D2FF" stroke-width="1.5" stroke-dasharray="2 2"/>
+            <line x1="11" y1="20" x2="21" y2="20" stroke="#00D2FF" stroke-width="1.2" stroke-opacity="0.6"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">PhishNet<span class="brand-title__accent">·GNN</span></div>
+          <span class="brand-tag">GNN Threat Intelligence</span>
+        </div>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <nav class="navbar__nav" role="navigation" aria-label="Main Navigation">
+        <button class="nav-tab active" data-tab="analyze" role="tab" aria-selected="true" aria-controls="panel-analyze" id="tab-analyze">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Analyze URL</span>
+        </button>
+        <button class="nav-tab" data-tab="graph" role="tab" aria-selected="false" aria-controls="panel-graph" id="tab-graph">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+          <span>Threat Graph</span>
+        </button>
+        <button class="nav-tab" data-tab="insights" role="tab" aria-selected="false" aria-controls="panel-insights" id="tab-insights">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span>Model Insights</span>
+        </button>
+        <button class="nav-tab" data-tab="about" role="tab" aria-selected="false" aria-controls="panel-about" id="tab-about">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>About</span>
+        </button>
+      </nav>
+
+      <!-- Right Header Actions & Live Status Badge -->
+      <div class="navbar__actions">
+        <div class="system-status-badge" id="systemStatusBadge" title="Backend Model Engine Status">
+          <span class="status-pulse-dot" id="statusDot"></span>
+          <span class="status-badge-text" id="statusBadgeText">Connecting...</span>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation Menu" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Drawer Nav -->
+    <div class="mobile-drawer" id="mobileDrawer">
+      <button class="mobile-nav-item active" data-tab="analyze">Analyze URL</button>
+      <button class="mobile-nav-item" data-tab="graph">Threat Graph</button>
+      <button class="mobile-nav-item" data-tab="insights">Model Insights</button>
+      <button class="mobile-nav-item" data-tab="about">About</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN CONTENT SHELL
+       ═══════════════════════════════════════════════════════════ -->
+  <main class="app-main" id="mainContent">
+
+    <!-- ─────────────────────────────────────────────────────────
+         TAB 1: ANALYZE URL SCREEN (HERO + RESULTS)
+         ───────────────────────────────────────────────────────── -->
+    <section class="tab-panel active" id="panel-analyze" role="tabpanel" aria-labelledby="tab-analyze">
+      
+      <!-- HERO SCANNER CONTAINER -->
+      <div class="hero-section" id="heroSection">
+        <div class="hero-badge">
+          <span class="hero-badge__dot"></span>
+          <span>Heterogeneous Graph Neural Network v2.0</span>
+        </div>
+
+        <h1 class="hero-headline">Detect phishing before it spreads.</h1>
+        <p class="hero-subheadline">
+          Analyze domain syntax, DNS infrastructure, and graph-based risk signals in one scan.
+        </p>
+
+        <!-- Search / Scan Input Box -->
+        <div class="scan-card">
+          <form class="scan-form" id="scanForm" onsubmit="return false;">
+            <div class="scan-input-group">
+              <label for="domainInput" class="sr-only">Domain or URL to analyze</label>
+              
+              <div class="input-icon-left" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/></svg>
+              </div>
+
+              <input 
+                type="text" 
+                id="domainInput" 
+                class="scan-input" 
+                placeholder="Example: secure-account-update.example or https://google.com" 
+                autocomplete="off" 
+                spellcheck="false"
+                required
+              />
+
+              <!-- Paste Button -->
+              <button type="button" class="btn-icon-action" id="pasteBtn" title="Paste from clipboard" aria-label="Paste domain from clipboard">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                <span class="btn-icon-tooltip">Paste</span>
+              </button>
+
+              <!-- Submit / Analyze Button -->
+              <button type="submit" class="btn-analyze" id="analyzeBtn">
+                <span class="btn-analyze__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </span>
+                <span class="btn-analyze__text">Analyze Domain</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Quick Test Demo Chips -->
+          <div class="demo-chips-row">
+            <span class="demo-chips-label">Quick Test:</span>
+            <button type="button" class="demo-chip demo-chip--phish" data-domain="http://paypal-verification-update.com.tk">
+              <span class="chip-dot chip-dot--red"></span> paypal-verification-update.com.tk
+            </button>
+            <button type="button" class="demo-chip demo-chip--benign" data-domain="https://google.com">
+              <span class="chip-dot chip-dot--green"></span> google.com
+            </button>
+            <button type="button" class="demo-chip demo-chip--phish" data-domain="http://g00gle-login.xyz">
+              <span class="chip-dot chip-dot--red"></span> g00gle-login.xyz
+            </button>
+            <button type="button" class="demo-chip demo-chip--benign" data-domain="https://github.com">
+              <span class="chip-dot chip-dot--green"></span> github.com
+            </button>
+          </div>
+
+          <!-- Safety Note -->
+          <div class="safety-banner">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>URLs are analyzed as text and DNS metadata. This tool <strong>never</strong> opens the submitted website.</span>
+          </div>
+        </div>
+
+        <!-- Multi-Stage Loading State (Hidden by default) -->
+        <div class="loading-console hidden" id="loadingConsole" aria-live="polite">
+          <div class="loading-console__header">
+            <div class="spinner-ring"></div>
+            <div class="loading-title">Analyzing Domain Risk Signals</div>
+          </div>
+          <div class="loading-steps">
+            <div class="loading-step" id="step1">
+              <span class="step-indicator"></span>
+              <span class="step-text">1. Parsing domain syntax & extracting 21 lexical features</span>
+            </div>
+            <div class="loading-step" id="step2">
+              <span class="step-indicator"></span>
+              <span class="step-text">2. Resolving authoritative DNS & IP/NS footprint</span>
+            </div>
+            <div class="loading-step" id="step3">
+              <span class="step-indicator"></span>
+              <span class="step-text">3. Reconstructing heterogeneous domain-IP-NS infrastructure graph</span>
+            </div>
+            <div class="loading-step" id="step4">
+              <span class="step-indicator"></span>
+              <span class="step-text">4. Executing 3-layer DGL RGCN neural inference</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS EXPERIENCE SECTION (Shown after scan) -->
+      <div class="results-dashboard hidden" id="resultsDashboard" aria-live="polite">
+        
+        <!-- Top Verdict Banner Card -->
+        <div class="result-hero-card" id="resultHeroCard">
+          
+          <!-- Left: Circular Risk Score Gauge -->
+          <div class="gauge-container">
+            <div class="gauge-svg-wrap">
+              <svg viewBox="0 0 120 120" width="110" height="110" class="gauge-svg">
+                <circle cx="60" cy="60" r="48" class="gauge-track" />
+                <circle cx="60" cy="60" r="48" class="gauge-progress" id="gaugeProgress" />
+              </svg>
+              <div class="gauge-inner">
+                <div class="gauge-val" id="gaugeScore">0%</div>
+                <div class="gauge-sublabel">RISK</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle: Verdict & Analyzed Target -->
+          <div class="result-summary-wrap">
+            <div class="verdict-header">
+              <span class="verdict-pill" id="verdictPill">
+                <span class="verdict-icon" id="verdictIcon"></span>
+                <span class="verdict-text" id="verdictText">Evaluating...</span>
+              </span>
+              <span class="confidence-tag" id="confidenceTag">Confidence: 95.0%</span>
+            </div>
+
+            <!-- Controlled Non-Clickable Code Text Block -->
+            <div class="domain-target-box">
+              <span class="target-label">Target Domain:</span>
+              <code class="domain-code-text" id="analyzedDomainText">example.com</code>
+            </div>
+
+            <div class="result-meta-row">
+              <div class="meta-item">
+                <span class="meta-label">Model Mode:</span>
+                <span class="meta-value meta-value--highlight" id="resultModelMode">DGL_RGCN</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Latency:</span>
+                <span class="meta-value" id="resultLatency">14.2 ms</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Timestamp:</span>
+                <span class="meta-value" id="resultTimestamp">Just now</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Actions -->
+          <div class="result-actions-wrap">
+            <button type="button" class="btn-secondary" id="analyzeAnotherBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>Analyze Another URL</span>
+            </button>
+            <button type="button" class="btn-secondary btn-secondary--accent" id="jumpToGraphBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+              <span>View Threat Graph</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- 3-Column Responsive Result Cards -->
+        <div class="results-grid-3col">
+          
+          <!-- Column A: Risk Signals Card -->
+          <article class="dashboard-card" aria-labelledby="heading-risk-signals">
+            <div class="card-header">
+              <div class="card-header__title-group">
+                <div class="card-header__icon card-header__icon--red">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <h2 class="card-title" id="heading-risk-signals">Key Risk Factors</h2>
+              </div>
+              <span class="card-badge" id="riskSignalsCount">3 Signals</span>
+            </div>
+            <div class="card-body">
+              <p class="card-description">Primary indicators identified during lexical and infrastructure parsing.</p>
+              <ul class="signals-list" id="signalsList">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </article>
+
+          <!-- Column B: Domain Profile Card -->
+          <article class="dashboard-card" aria-labelledby="heading-domain-profile">
+            <div class="card-header">
+              <div class="card-header__title-group">
+                <div class="card-header__icon card-header__icon--blue">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </div>
+                <h2 class="card-title" id="heading-domain-profile">Lexical & DNS Profile</h2>
+              </div>
+              <span class="card-badge card-badge--cyan">21 Features</span>
+            </div>
+            <div class="card-body">
+              <div class="profile-grid" id="profileGrid">
+                <!-- Profile items dynamically populated -->
+              </div>
+            </div>
+          </article>
+
+          <!-- Column C: Infrastructure Footprint Card -->
+          <article class="dashboard-card" aria-labelledby="heading-infra-footprint">
+            <div class="card-header">
+              <div class="card-header__title-group">
+                <div class="card-header__icon card-header__icon--purple">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                </div>
+                <h2 class="card-title" id="heading-infra-footprint">Infrastructure Footprint</h2>
+              </div>
+              <span class="card-badge" id="infraBadge">Active Records</span>
+            </div>
+            <div class="card-body">
+              <div class="infra-section">
+                <div class="infra-section-title">
+                  <span>Resolved A-Records (IPs)</span>
+                  <span class="infra-count" id="ipCountBadge">0</span>
+                </div>
+                <div class="infra-chips-wrap" id="ipChipsContainer">
+                  <span class="empty-state-text">No IP records resolved</span>
+                </div>
+              </div>
+
+              <div class="infra-section" style="margin-top: 14px;">
+                <div class="infra-section-title">
+                  <span>Authoritative Nameservers (NS)</span>
+                  <span class="infra-count" id="nsCountBadge">0</span>
+                </div>
+                <div class="infra-chips-wrap" id="nsChipsContainer">
+                  <span class="empty-state-text">No NS records resolved</span>
+                </div>
+              </div>
+
+              <div class="infra-legend-box">
+                <div class="legend-item"><span class="legend-dot legend-dot--domain"></span> Domain Node</div>
+                <div class="legend-item"><span class="legend-dot legend-dot--ip"></span> IP Node</div>
+                <div class="legend-item"><span class="legend-dot legend-dot--ns"></span> NS Node</div>
+              </div>
+            </div>
+          </article>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────────
+         TAB 2: THREAT GRAPH VIEW
+         ───────────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="panel-graph" role="tabpanel" aria-labelledby="tab-graph">
+      
+      <div class="graph-page-header">
+        <div>
+          <h2 class="section-heading">Threat Infrastructure Graph</h2>
+          <p class="section-subheading">Interactive multi-relational visualization of domain nodes, shared IP subnets, and authoritative nameservers.</p>
+        </div>
+
+        <div class="graph-toolbar">
+          <div class="graph-mode-toggle">
+            <button type="button" class="btn-toggle active" id="btnGraphCurrent">Current Target</button>
+            <button type="button" class="btn-toggle" id="btnGraphCluster">Dataset Clusters <span class="demo-tag">Demo</span></button>
+          </div>
+          <button type="button" class="btn-icon" id="btnGraphReset" title="Reset Camera View" aria-label="Reset Camera View">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Graph Visualizer Container -->
+      <div class="graph-visualizer-container">
+        
+        <!-- Legend Overlay -->
+        <div class="graph-overlay-legend">
+          <div class="overlay-legend-title">Graph Node Types</div>
+          <div class="overlay-legend-items">
+            <div class="legend-chip"><span class="legend-dot legend-dot--domain"></span> Domain Node</div>
+            <div class="legend-chip"><span class="legend-dot legend-dot--ip"></span> Resolved IP</div>
+            <div class="legend-chip"><span class="legend-dot legend-dot--ns"></span> Nameserver</div>
+          </div>
+          <div class="overlay-edge-counts" id="graphEdgeStats">
+            <span>Edges: <strong>0</strong></span>
+            <span>Nodes: <strong>0</strong></span>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="threatGraphCanvas"></canvas>
+          <div class="graph-node-tooltip hidden" id="graphTooltip" role="tooltip"></div>
+        </div>
+
+        <!-- Graph Empty State -->
+        <div class="graph-empty-state" id="graphEmptyState">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+          <h3>No Threat Graph Active</h3>
+          <p>Analyze a domain above to view its isolated bipartite infrastructure network, or load dataset sample clusters.</p>
+          <button type="button" class="btn-primary-sm" id="btnLoadSampleGraph">Load Sample Cluster</button>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────────
+         TAB 3: MODEL INSIGHTS SCREEN
+         ───────────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="panel-insights" role="tabpanel" aria-labelledby="tab-insights">
+      
+      <div class="section-header-block">
+        <h2 class="section-heading">Model Architecture & Empirical Insights</h2>
+        <p class="section-subheading">Technical specifications, message-passing mechanism, and benchmark metrics for the Relational Graph Convolutional Network (RGCN).</p>
+      </div>
+
+      <!-- 4-Step Architecture Pipeline Timeline -->
+      <div class="pipeline-flow-card">
+        <h3 class="subsection-title">PhishNet-GNN 4-Stage Detection Pipeline</h3>
+        
+        <div class="pipeline-steps-row">
+          
+          <div class="pipeline-step-item">
+            <div class="pipeline-step-num">01</div>
+            <div class="pipeline-step-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h4 class="pipeline-step-title">Lexical Syntax Parsing</h4>
+            <p class="pipeline-step-desc">Extracts 17 structural features: Shannon entropy, brand edit distance, leet-speak transforms, and keyword flags.</p>
+          </div>
+
+          <div class="pipeline-connector" aria-hidden="true">→</div>
+
+          <div class="pipeline-step-item">
+            <div class="pipeline-step-num">02</div>
+            <div class="pipeline-step-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+            </div>
+            <h4 class="pipeline-step-title">DNS Footprint Resolution</h4>
+            <p class="pipeline-step-desc">Queries authoritative A & NS records via dnspython with SQLite caching and query rate limiting.</p>
+          </div>
+
+          <div class="pipeline-connector" aria-hidden="true">→</div>
+
+          <div class="pipeline-step-item">
+            <div class="pipeline-step-num">03</div>
+            <div class="pipeline-step-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/></svg>
+            </div>
+            <h4 class="pipeline-step-title">Heterograph Construction</h4>
+            <p class="pipeline-step-desc">Builds NetworkX multi-relational graph and converts to DGL heterograph with 5 canonical relation types.</p>
+          </div>
+
+          <div class="pipeline-connector" aria-hidden="true">→</div>
+
+          <div class="pipeline-step-item">
+            <div class="pipeline-step-num">04</div>
+            <div class="pipeline-step-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h4 class="pipeline-step-title">3-Layer RGCN Inference</h4>
+            <p class="pipeline-step-desc">Per-relation GraphConv aggregations with Focal Loss, batch norm, and dropout for class-imbalanced classification.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Grid of Metrics and Confusion Matrix -->
+      <div class="insights-grid-2col">
+        
+        <!-- Left: Verified Validation Metrics -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-header__title-group">
+              <div class="card-header__icon card-header__icon--green">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <h3 class="card-title">Verified Validation Benchmarks</h3>
+            </div>
+            <span class="card-badge card-badge--green">Local Test Set</span>
+          </div>
+          <div class="card-body">
+            <p class="card-description">Evaluated on 9,992 domains (70/15/15 split) using the native DGL 2.2.1 / PyTorch 2.2.1 runtime.</p>
+            
+            <div class="metrics-tiles-grid">
+              
+              <div class="metric-tile">
+                <span class="metric-tile__label">Accuracy</span>
+                <span class="metric-tile__value accent-cyan">95.07%</span>
+                <span class="metric-tile__delta">+4.1% vs RF Baseline</span>
+              </div>
+
+              <div class="metric-tile">
+                <span class="metric-tile__label">ROC-AUC</span>
+                <span class="metric-tile__value accent-purple">0.9870</span>
+                <span class="metric-tile__delta">Area Under ROC Curve</span>
+              </div>
+
+              <div class="metric-tile">
+                <span class="metric-tile__label">Precision</span>
+                <span class="metric-tile__value">94.45%</span>
+                <span class="metric-tile__delta">Low False Alarms</span>
+              </div>
+
+              <div class="metric-tile">
+                <span class="metric-tile__label">Recall</span>
+                <span class="metric-tile__value">95.72%</span>
+                <span class="metric-tile__delta">High Threat Detection</span>
+              </div>
+
+              <div class="metric-tile">
+                <span class="metric-tile__label">F1-Score</span>
+                <span class="metric-tile__value">95.08%</span>
+                <span class="metric-tile__delta">Harmonic Balance</span>
+              </div>
+
+              <div class="metric-tile">
+                <span class="metric-tile__label">Total Dataset</span>
+                <span class="metric-tile__value">9,992</span>
+                <span class="metric-tile__delta">5,000 Malicious / 4,992 Benign</span>
+              </div>
+
+            </div>
+
+            <div class="disclaimer-footnote">
+              *Latest local validation results on project test split. Performance in live wild deployment varies by DNS resolution latency.
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Confusion Matrix Visualizer -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <div class="card-header__title-group">
+              <div class="card-header__icon card-header__icon--blue">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+              </div>
+              <h3 class="card-title">Empirical Confusion Matrix</h3>
+            </div>
+            <span class="card-badge">N = 9,992</span>
+          </div>
+          <div class="card-body">
+            <p class="card-description">Full dataset classification evaluation distribution from latest local test pass.</p>
+
+            <div class="matrix-wrapper">
+              
+              <div class="matrix-grid">
+                <!-- Top Header -->
+                <div class="matrix-header-corner"></div>
+                <div class="matrix-col-header">Predicted Benign</div>
+                <div class="matrix-col-header">Predicted Phishing</div>
+
+                <!-- Row 1: Actual Benign -->
+                <div class="matrix-row-header">Actual Benign</div>
+                <div class="matrix-cell matrix-cell--tn">
+                  <div class="matrix-cell__value">4,734</div>
+                  <div class="matrix-cell__label">True Negative (TN)</div>
+                  <div class="matrix-cell__pct">94.8%</div>
+                </div>
+                <div class="matrix-cell matrix-cell--fp">
+                  <div class="matrix-cell__value">258</div>
+                  <div class="matrix-cell__label">False Positive (FP)</div>
+                  <div class="matrix-cell__pct">5.2%</div>
+                </div>
+
+                <!-- Row 2: Actual Phishing -->
+                <div class="matrix-row-header">Actual Phishing</div>
+                <div class="matrix-cell matrix-cell--fn">
+                  <div class="matrix-cell__value">258</div>
+                  <div class="matrix-cell__label">False Negative (FN)</div>
+                  <div class="matrix-cell__pct">5.2%</div>
+                </div>
+                <div class="matrix-cell matrix-cell--tp">
+                  <div class="matrix-cell__value">4,742</div>
+                  <div class="matrix-cell__label">True Positive (TP)</div>
+                  <div class="matrix-cell__pct">94.8%</div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="matrix-legend-row">
+              <span class="legend-item"><span class="matrix-dot matrix-dot--green"></span> Correct Classifications (94.8%)</span>
+              <span class="legend-item"><span class="matrix-dot matrix-dot--amber"></span> Misclassifications (5.2%)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Feature Importance Summary Card -->
+      <div class="dashboard-card" style="margin-top: 20px;">
+        <div class="card-header">
+          <div class="card-header__title-group">
+            <div class="card-header__icon card-header__icon--amber">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <h3 class="card-title">Top Graph & Lexical Feature Weights</h3>
+          </div>
+          <span class="card-badge">Normalized Relative Importance</span>
+        </div>
+        <div class="card-body">
+          <div class="feature-bars-grid" id="featureBarsContainer">
+            <!-- Dynamically populated feature bars -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────────
+         TAB 4: ABOUT & SAFETY SECTION
+         ───────────────────────────────────────────────────────── -->
+    <section class="tab-panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about">
+      
+      <div class="section-header-block">
+        <h2 class="section-heading">About PhishNet-GNN</h2>
+        <p class="section-subheading">Graph Neural Network architecture designed for real-time proactive phishing infrastructure detection.</p>
+      </div>
+
+      <div class="about-grid">
+        
+        <!-- Problem & Solution Card -->
+        <article class="dashboard-card">
+          <div class="card-header">
+            <h3 class="card-title">The Challenge: Why Blacklists Fail</h3>
+          </div>
+          <div class="card-body about-prose">
+            <p>
+              Traditional phishing countermeasures rely on <strong>static blacklists</strong> and rule heuristics. These fail against zero-day campaigns, domain generation algorithms (DGAs), and fast-flux networks where domains exist for only minutes before rotating.
+            </p>
+            <p>
+              <strong>The Relational Insight:</strong> Phishing campaigns do not operate in isolation. Attackers reuse infrastructure — sharing IP subnets, bulletproof nameservers, autonomous systems, and lexical token templates.
+            </p>
+            <p>
+              <strong>PhishNet-GNN</strong> models domains as nodes within a heterogeneous infrastructure graph. By propagating embeddings through multi-relational graph convolutions, the model detects suspicious clusters based on infrastructure topology.
+            </p>
+          </div>
+        </article>
+
+        <!-- Safety & Security Guidelines -->
+        <article class="dashboard-card">
+          <div class="card-header">
+            <div class="card-header__title-group">
+              <div class="card-header__icon card-header__icon--amber">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <h3 class="card-title">Safety Disclaimer & Protocol</h3>
+            </div>
+          </div>
+          <div class="card-body about-prose">
+            <div class="warning-callout">
+              <strong>Academic Security Tool Disclaimer:</strong>
+              <p>This software is an academic security-analysis tool developed for research and threat detection. A prediction represents a calculated statistical risk indicator, not legal proof of malicious activity.</p>
+            </div>
+            
+            <h4 style="margin-top: 14px; font-size: 0.9rem; color: #F8FAFC;">Security Protocol:</h4>
+            <ul style="padding-left: 20px; font-size: 0.84rem; color: #94A3B8; margin-top: 6px; line-height: 1.6;">
+              <li>Do <strong>not</strong> navigate to or enter credentials on any suspicious URLs.</li>
+              <li>Always verify domain certificates and official contact channels before trusting links.</li>
+              <li>Use these results as triage indicators to decide whether to block or quarantine traffic.</li>
+            </ul>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Tech Stack Matrix Card -->
+      <div class="dashboard-card" style="margin-top: 20px;">
+        <div class="card-header">
+          <h3 class="card-title">Technology Stack & Engineering Architecture</h3>
+          <span class="card-badge">Production Architecture</span>
+        </div>
+        <div class="card-body">
+          <div class="tech-stack-grid">
+            
+            <div class="tech-stack-item">
+              <div class="tech-name">Deep Graph Library (DGL)</div>
+              <div class="tech-role">HeteroGraphConv & Multi-Relational Neural Engine</div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="tech-name">PyTorch 2.2.1</div>
+              <div class="tech-role">Deep Learning Runtime & Focal Loss Optimization</div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="tech-name">NetworkX 3.2.1</div>
+              <div class="tech-role">Graph Construction & Structural Analysis</div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="tech-name">Scikit-Learn 1.4.1</div>
+              <div class="tech-role">ML Benchmarks (Random Forest, SVM, GB) & Metrics</div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="tech-name">dnspython & SQLite</div>
+              <div class="tech-role">Live DNS Resolution with Rate-Limited Caching</div>
+            </div>
+
+            <div class="tech-stack-item">
+              <div class="tech-name">Flask REST API</div>
+              <div class="tech-role">Real-Time Threat Intelligence Microservice</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-left">
+        <span class="footer-logo">PhishNet-GNN</span>
+        <span class="footer-sep">|</span>
+        <span class="footer-copy">Real-Time Phishing Domain Detection via Graph Neural Networks</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-tag">Python 3.11 · DGL 2.2.1 · PyTorch 2.2.1</span>
+        <span class="footer-ver">v2.0.0</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

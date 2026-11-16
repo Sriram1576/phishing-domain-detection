@@ -1,0 +1,227 @@
+ 500 [Normal              ]     sys.path.insert(0, str(PROJECT_ROOT))
+ 502 [Normal              ] # ── Banner ─────────────────────────────────────────────────────────────────
+ 503 [Normal              ] BANNER = """
+ 504 [Normal              ]   PhishNet-GNN v{version}
+ 505 [Normal              ]   Real-Time Phishing Domain Detection via Graph Neural Networks
+ 506 [Normal              ]   Architecture: Heterogeneous Graph (Domain-IP-NS) + RGCN
+ 507 [Normal              ] """
+ 510 [Normal              ] # ── Configuration ──────────────────────────────────────────────────────────
+ 512 [Normal              ] def load_config(config_path=None):
+ 513 [Normal              ]     """Load the YAML configuration file."""
+ 514 [Normal              ]     if config_path is None:
+ 515 [Normal              ]         config_path = PROJECT_ROOT / "config.yaml"
+ 516 [Normal              ]     config_path = Path(config_path)
+ 517 [Normal              ]     if not config_path.exists():
+ 518 [Normal              ]         raise FileNotFoundError(f"Config not found: {config_path}")
+ 519 [Normal              ]     with open(config_path, "r", encoding="utf-8") as fh:
+ 520 [Normal              ]         return yaml.safe_load(fh)
+ 523 [Normal              ] def setup_logging(config):
+ 524 [Normal              ]     """Configure project-wide logging."""
+ 525 [Normal              ]     logs_dir = PROJECT_ROOT / config.get("paths", {}).get("logs_dir", "logs/")
+ 526 [Normal              ]     logs_dir.mkdir(parents=True, exist_ok=True)
+ 527 [Normal              ]     log_file = logs_dir / "phishnet.log"
+ 529 [Normal              ]     logging.basicConfig(
+ 530 [Normal              ]         level=logging.INFO,
+ 531 [Normal              ]         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+ 532 [Normal              ]         datefmt="%Y-%m-%d %H:%M:%S",
+ 533 [Normal              ]         handlers=[
+ 534 [Normal              ]             logging.StreamHandler(sys.stdout),
+ 535 [Normal              ]             logging.FileHandler(str(log_file), encoding="utf-8"),
+ 536 [Normal              ]         ],
+ 537 [Normal              ]     )
+ 538 [Normal              ]     logger = logging.getLogger("PhishNet-GNN")
+ 539 [Normal              ]     logger.info("Logging initialised - log file: %s", log_file)
+ 540 [Normal              ]     return logger
+ 543 [Normal              ] def ensure_directories(config):
+ 544 [Normal              ]     """Create all required output directories."""
+ 545 [Normal              ]     for key in ['output_dir']:
+ 546 [Normal              ]         d = config.get('data', {}).get(key, 'data/')
+ 547 [Normal              ]         (PROJECT_ROOT / d).mkdir(parents=True, exist_ok=True)
+ 548 [Normal              ]     for key in ['models_dir', 'results_dir', 'logs_dir']:
+ 549 [Normal              ]         d = config.get('paths', {}).get(key, '')
+ 550 [Normal              ]         if d:
+ 551 [Normal              ]             (PROJECT_ROOT / d).mkdir(parents=True, exist_ok=True)
+ 554 [Normal              ] # ── Subcommand Handlers ───────────────────────────────────────────────────
+ 556 [Normal              ] def cmd_generate_data(args, config, logger):
+ 557 [Normal              ]     """Collect real datasets or generate synthetic domains."""
+ 558 [Normal              ]     logger.info("Starting data collection...")
+ 560 [Normal              ]     from src.data.dataset_collector import DatasetCollector
+ 562 [Normal              ]     data_cfg = config.get("data", {})
+ 563 [Normal              ]     output_dir = str(PROJECT_ROOT / data_cfg.get("output_dir", "data/"))
+ 564 [Normal              ]     dataset_file = data_cfg.get("dataset_file", "domains_dataset.csv")
+ 565 [Normal              ]     output_path = os.path.join(output_dir, dataset_file)
+ 567 [Normal              ]     collector = DatasetCollector()
+ 568 [Normal              ]     df = collector.collect(
+ 569 [Normal              ]         num_malicious=data_cfg.get("num_malicious", 5000),
+ 570 [Normal              ]         num_benign=data_cfg.get("num_benign", 5000),
+ 571 [Normal              ]     )
+ 572 [Normal              ]     saved_path = collector.save(df, output_path)
+ 574 [Normal              ]     logger.info("Dataset saved to %s (%d rows)", saved_path, len(df))
+ 575 [Normal              ]     print(f"\n[+] Dataset collected: {len(df)} domains")
+ 576 [Normal              ]     print(f"    Malicious: {(df['label'] == 1).sum()}")
+ 577 [Normal              ]     print(f"    Benign:    {(df['label'] == 0).sum()}")
+ 578 [Normal              ]     if 'source' in df.columns:
+ 579 [Normal              ]         print(f"    …
+ 581 [Normal              ] PhishNet-GNN v2.0: Real-Time Phishing Domain Detection via Graph Neural Networks
+ 582 [Normal              ] =================================================================================
+ 584 [Normal              ] Main entry point. Supports:
+ 585 [Normal              ]     python main.py generate-data    # Collect real or generate synthetic domains
+ 586 [Normal              ]     python main.py train            # Train RGCN + baseline models
+ 587 [Normal              ]     python main.py evaluate         # Show evaluation results
+ 588 [Normal              ]     python main.py serve            # Start Flask REST API
+ 589 [Normal              ]     python main.py analyze --domain example.com   # Quick heuristic analysis
+ 590 [Normal              ]     python main.py infer --domain example.com     # Full GNN inference pipeline
+ 591 [Normal              ] """
+ 593 [Normal              ] import argparse
+ 594 [Normal              ] import logging
+ 595 [Normal              ] import os
+ 596 [Normal              ] import sys
+ 597 [Normal              ] from pathlib import Path
+ 598 [Normal              ] from typing import Any, Dict
+ 600 [Normal              ] import yaml
+ 601 [Normal              ] main.py
+ 602 [Normal              ] [12:01 pm, 10/11/2026] Subham(giet): import os
+ 603 [Normal              ] import sys
+ 604 [Normal              ] import yaml
+ 605 [Normal              ] import json
+ 606 [Normal              ] import logging
+ 607 [Normal              ] import torch
+ 608 [Normal              ] 2. Dynamic Graph Builder 
+ 609 [Normal              ] Python
+ 610 [Normal              ] import os
+ 611 [Normal              ] import sys
+ 612 [Normal              ] import yaml
+ 613 [Normal              ] import json
+ 614 [Normal              ] import logging
+ 615 [Normal              ] import torch
+ 617 [Normal              ] # Initialize minimal logger
+ 618 [Normal              ] logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+ 620 [Normal              ] def verify_setup():
+ 621 [Normal              ]     print("=" * 60)
+ 622 [Normal              ]     print("VERIFYING DGL & PYTORCH ENVIRONMENT")
+ 623 [Normal              ]     print("=" * 60)
+ 625 [Normal              ]     try:
+ 626 [Normal              ]         import dgl
+ 627 [Normal              ]         import networkx
+ 628 [Normal              ]         import sklearn
+ 629 [Normal              ]     except ImportError as e:
+ 630 [Normal              ]         print(f"FAILED TO IMPORT: {e}")
+ 631 [Normal              ]         print("Please ensure you are in the Python 3.11 virtual environment with DGL installed.")
+ 632 [Normal              ]         sys.exit(1)
+ 634 [Normal              ]     print(f"PyTorch Version: {torch._version_}")
+ 635 [Normal              ]     print(f"DGL Version:     {dgl._version_}")
+ 636 [Normal              ]     print("Imports successful!")
+ 637 [Normal              ]     print("\n")
+ 639 [Normal              ] def verify_pipeline():
+ 640 [Normal              ]     print("=" * 60)
+ 641 [Normal              ]     print("VERIFYING GRAPH CONSTRUCTION & TRAINING")
+ 642 [Normal              ]     print("=" * 60)
+ 644 [Normal              ]     # Imports inside to rely on local project structure
+ 645 [Normal              ]     import pandas as pd
+ 646 [Normal              ]     from src.models.trainer import PhishNetTrainer
+ 647 [Normal              ]     from src.graph.graph_builder import DomainGraphBuilder
+ 649 [Normal              ]     with open('config.yaml', 'r') as f:
+ 650 [Normal              ]         config = yaml.safe_load(f)
+ 652 [Normal              ]     trainer = PhishNetTrainer(config)
+ 654 [Normal              ]     # Load dataset using the trainer pipeline (no separate CSVs needed)
+ 655 [Normal              ]     print("0. Loading dataset via trainer pipeline...")
+ 656 [Normal              ]     df = trainer.load_dataset()
+ 657 [Normal              ]     print(f"   Dataset: {len(df)} domains ({(df['label']==1).sum()} phishing, {(df['label']==0).sum()} benign)")
+ 659 [Normal              ]     # Resolve DNS using the trainer pipeline
+ 660 [Normal              ]     print("   Resolving DNS (cached)...")
+ 661 [Normal              ]     dns_df = trainer.resolve_dns(df)
+ 663 [Normal              ]     # Extract features using the trainer pipeline
+ 664 [Normal              ]     print("   Extracting features...")
+ 665 [Normal              ]     features_df = trainer.extract_features(df, dns_df)
+ 667 [Normal              ]     # Test Graph Builder directly
+ 668 [Normal              ]     print("1. Testing Graph Builder...")
+ 669 [Normal              ]     g, builder, feature_cols = trainer.build_graph(df, dns_df, features_df)
+ 671 [Normal              ]     print(f"   Node Types: {g.ntypes}")
+ 672 [Normal              ]     print(f"   Canonical Edge Types: {g.canonical_etypes}")
+ 674 [Normal              ]     feat_shape = g.nodes['domain'].data['feat'].shape
+ 675 [Normal              ]     print(f"   Domain Features Shape: {feat_shape} (Expected: [N, 21])")
+ 677 [Normal              ]     # Print edge counts
+ 678 [Normal              ]     print("   Edge Counts:")
+ 679 [Normal              ]     for etype in g.canonical_etypes:
+ 680 [Normal              ]         print(f"     {etype}: {g.num_edges(etype)}")
+ 682 [Normal              ]     # Save features for inference caching (Fix 6)
+ 683 [Normal              ]     features_cache_path = os.path.join(trainer.models_dir, 'domain_features.csv')
+ 684 [Normal              ]     features_with_domain = features_df[['domain'] + feature_cols].copy()
+ 685 [Normal              ]     features_with_domain.to_csv(features_cache_path, index=False)
+ 686 [Normal              ]     print(f"   Saved feature cache: {features_cache_path} ({len(features_with_domain)} rows)")
+ 688 [Normal              ]     # Train RGCN
+ 689 [Normal              ]     print("\n2. Training DGL RGCN Model...")
+ 690 [Normal              ]     results = trainer.train_rgcn(g, feature_cols)
+ 692 [Normal              ]     print("\n3. Training Metrics:")
+ 693 [Normal              ]     metrics = results['test_metrics']
+ 694 [Normal              ]     for k, v in metrics.items():
+ 695 [Normal              ]         if k != 'confusion_matrix':
+ 696 [Normal              ]             print(f"   - {k}: {v:.4f}")
+ 697 [Normal              ]     print(f"   MODEL_MODE: DGL_RGCN")
+ 699 [Normal              ]     # Re-evaluate the model to get the confusion matrix
+ 700 [Normal              ]     from src.models.gnn_model import PhishRGCN
+ 701 [Normal              ]     import torch.nn.functional as F
+ 702 [Normal              ]     from sklearn.metrics import confusion_matrix
+ 704 [Normal              ]     in_feats = {}
+ 705 [Normal              ]     for ntype in g.ntypes:
+ 706 [Normal              ]         if 'feat' in g.nodes[ntype].data:
+ 707 [Normal              ]             in_feats[ntype] = g.nodes[ntype].data['feat'].shape[1]
+ 708 [Normal              ]         else:
+ 709 [Normal              ]             in_feats[ntype] = 1
+ 711 [Normal              ]     model = PhishRGCN(in_feats=in_feats)
+ 712 [Normal              ]     model_path = os.path.join(trainer.models_dir, 'phish_rgcn.pt')
+ 713 [Normal              ]     if not os.path.exists(model_path):
+ 714 [Normal              ]         print(f"ERROR: Model file not found at {model_path}")
+ 715 [Normal              ]         sys.exit(1)
+ 717 [Normal              ]     model.load_state_dict(torch.load(model_path, weights_only=True))
+ 718 [Normal              ]     model.eval()
+ 720 [Normal              ]     feat_dict = {ntype: g.nodes[ntype].data.get('feat', torch.ones(g.num_nodes(ntype), 1)) for ntype in g.ntypes}
+ 721 [Normal              ]     with torch.no_grad():
+ 722 [Normal              ]         logits = model(g, feat_dict)
+ 723 [Normal              ]         preds = logits.argmax(dim=1).numpy()
+ 724 [Normal              ]         labels = g.nodes['domain'].data['label'].numpy()
+ 726 [Normal              ]     cm = confusion_matrix(labels, preds)
+ 727 [Normal              ]     print("\n   Confusion Matrix:")
+ 728 [Normal              ]     print(f"   [[{cm[0][0]}, {cm[0][1]}]")
+ 729 [Normal              ]     print(f"    [{cm[1][0]}, {cm[1][1]}]]") 
+ 730 [Normal              ]     print("\n") 
+ 731 [Normal              ] def verify_inference():
+ 732 [Normal              ]     print("=" * 60)
+ 733 [Normal              ]     print("VERIFYING INFERENCE PIPELINE")
+ 734 [Normal              ]     print("=" * 60)
+ 736 [Normal              ]     from src.predict import predict_url
+ 737 [Normal              ]     test_url = "http://paypal-verification-update.com.tk"
+ 738 [Normal              ]     print(f"Running inference on: {test_url}")
+ 739 [Normal              ]     # This will print MODEL_MODE
+ 740 [Normal              ]     result = predict_url(test_url)
+ 741 [Normal              ]     print(f"\nVerdict: {result['verdict']}")
+ 742 [Normal              ]     print(f"Probability: {result['probability']:.2f}")
+ 743 [Normal              ] if _name_ == "_main_":
+ 744 [Normal              ]     verify_setup()
+ 745 [Normal              ]     verify_pipeline()
+ 746 [Normal              ]     verify_inference()
+ 747 [Normal              ]     print("\nVerification Complete!")
+ 748 [Normal              ] 6.4 Screenshots
+ 759 [Normal              ] 7. TESTING
+ 760 [Normal              ] 7.1 Testing Strategy
+ 761 [Normal              ] Unit testing is performed to check whether each individual module of the phishing detection system works correctly. In this project, separate testing is carried out for URL validation, feature extract
+ 763 [Normal              ] 7.2 Test Case Execution Summary
+ 783 [Normal              ] 8. RESULTS AND DISCUSSION
+ 784 [Normal              ] We compared our Graph Convolutional Network against two widely used baseline classifiers (Random Forest and XGBoost) trained on the same data using flat tabular features:
+ 786 [Normal              ] 8.1 Observations
+ 787 [List Paragraph      ] Handling Deceptive URLs: Baseline tabular models were often fooled by zero-day domains that looked realistic lexically (for example, chase-security-verify-login.com). The GCN correctly identified thes
+ 788 [List Paragraph      ] Detecting Hijacked Sites: Sometimes attackers compromise old, legitimate websites and host phishing folders inside them. Lexical models often miss these because the root domain has an established age.
+ 789 [List Paragraph      ] Addressing Network Bottlenecks: The most time-consuming part of the system is the WHOIS lookup, which relies on public port 43 socket connections. When external registrars respond slowly, latency can 
+ 810 [Normal              ] 9. CONCLUSION, LIMITATIONS & FUTURE SCOPE
+ 811 [Normal              ] 9.1 Conclusion
+ 812 [Normal              ] In this project, we built a functional phishing detection system that uses Graph Neural Networks to analyze the infrastructure behind suspicious links[cite: 1]. By modeling relationships between URLs,
+ 813 [Normal              ] Using PyTorch Geometric, NetworkX, and Flask, our model achieved a test accuracy of 96.85% and an average response time of 2.16 seconds, proving that graph learning can be practical, accurate, and fas
+ 814 [Normal              ] 9.2 Limitations
+ 815 [List Paragraph      ] Dependence on Third-Party Lookups: Because the system performs live DNS and WHOIS checks, rate limits or outages on external servers can slow down feature extraction.
+ 816 [List Paragraph      ] Proxy and CDN Masking: Cloudflare and similar CDNs sit between the user and the true server, masking the real hosting IP and nameserver behind generic proxy addresses.
+ 817 [List Paragraph      ] Ephemeral Single-Use Infrastructure: Attackers deploying links on free cloud hosting platforms (such as basic Firebase or Netlify subdomains) generate sparse graphs with minimal neighborhood context.
+ 818 [Normal              ] 9.3 Future Scope
+ 819 [List Paragraph      ] Graph Attention Networks (GAT): Upgrading the GCN to an attention-based model (like GAT or HAN) to automatically assign higher weights to critical relationships (such as nameserver changes) over less 
+ 820 [List Paragraph      ] Lightweight HTML Inspection: Adding quick checks for website favicons and page title tags into the node features to catch branded landing page spoofs.
+ 821 [List Paragraph      ] Browser Extension: Porting the client-side tool into a Chrome/Firefox extension that automatically checks links before the browser navigates to them.
+ 822 [List Paragraph      ] Continuous Updates: Building an automated worker script that pulls daily feeds from OpenPhish and PhishTank to periodically retrain the model against new attack trends.

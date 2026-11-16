@@ -1,0 +1,140 @@
+# ============================================================================
+# PhishNet-GNN v2.0 Configuration
+# Real-Time Phishing Domain Detection via Graph Neural Networks
+# ============================================================================
+
+project:
+  name: "PhishNet-GNN"
+  version: "2.0.0"
+  description: "Real-Time Phishing Domain Detection via Graph Neural Networks"
+
+# ---------------------------------------------------------------------------
+# Dataset Collection
+# ---------------------------------------------------------------------------
+data:
+  output_dir: "data/"
+  dataset_file: "domains_dataset.csv"
+  dns_cache_db: "data/dns_cache.db"
+
+  # Real data sources
+  sources:
+    phishtank_url: "http://data.phishtank.com/data/online-valid.json"
+    tranco_url: "https://tranco-list.eu/top-1m.csv.zip"
+    openphish_url: "https://openphish.com/feed.txt"
+
+  # Sample sizes
+  num_malicious: 5000
+  num_benign: 5000
+
+  # Synthetic fallback (used when real sources unavailable)
+  synthetic_fallback: true
+  num_legitimate_fallback: 3000
+  num_phishing_fallback: 3000
+
+# ---------------------------------------------------------------------------
+# DNS Resolution
+# ---------------------------------------------------------------------------
+dns:
+  timeout: 3            # seconds per query
+  max_retries: 2
+  rate_limit: 50        # queries per second
+  batch_size: 100       # domains per batch
+  cache_ttl: 86400      # cache expiry in seconds (24h)
+  nameservers:          # custom DNS resolvers (optional)
+    - "8.8.8.8"
+    - "8.8.4.4"
+    - "1.1.1.1"
+
+# ---------------------------------------------------------------------------
+# Feature Extraction
+# ---------------------------------------------------------------------------
+features:
+  lexical: true
+  dns_aware: true
+  brand_detection: true
+  leet_speak_normalization: true
+
+# ---------------------------------------------------------------------------
+# Graph Construction
+# ---------------------------------------------------------------------------
+graph:
+  # Heterogeneous graph node/edge types
+  node_types:
+    - "domain"
+    - "ip"
+    - "nameserver"
+  edge_types:
+    - ["domain", "has_ip", "ip"]
+    - ["domain", "has_ns", "nameserver"]
+
+  # IP node features
+  ip_features: true       # compute degree, shared-count for IP nodes
+  ns_features: true       # compute degree, shared-count for NS nodes
+
+  # Legacy homogeneous options (for baseline GraphSAGE)
+  similarity_edges: false
+  similarity_threshold: 3
+
+# ---------------------------------------------------------------------------
+# Model Configuration
+# ---------------------------------------------------------------------------
+model:
+  # Primary: RGCN on heterograph
+  rgcn:
+    hidden_dim: 128
+    num_layers: 3
+    num_bases: 4          # basis decomposition for RGCN weight sharing
+    dropout: 0.3
+    learning_rate: 0.001
+    epochs: 200
+    patience: 20
+    weight_decay: 0.0005
+
+  # Alternative: GraphSAGE (homogeneous fallback)
+  gnn:
+    hidden_dim: 128
+    num_layers: 3
+    dropout: 0.3
+    learning_rate: 0.001
+    epochs: 200
+    patience: 20
+    weight_decay: 0.0005
+    aggregator_type: "mean"
+
+  # Baseline ML models
+  baseline:
+    n_estimators: 200
+    max_depth: 10
+    cv_folds: 5
+
+  # Loss function
+  loss:
+    type: "focal"         # "focal" or "cross_entropy"
+    focal_alpha: 0.25     # weighting factor for class imbalance
+    focal_gamma: 2.0      # focusing parameter
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
+training:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+  batch_size: 64
+
+# ---------------------------------------------------------------------------
+# API Server
+# ---------------------------------------------------------------------------
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+  models_dir: "models/saved/"
+  results_dir: "results/"
+  logs_dir: "logs/"

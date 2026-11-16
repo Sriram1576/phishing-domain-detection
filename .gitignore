@@ -1,0 +1,66 @@
+# ============================================================================
+# PhishNet-GNN .gitignore
+# ============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# --- Virtual environments ---
+venv/
+.venv/
+.venv-gnn/
+.env-gnn/
+env/
+.env
+
+# --- Package managers ---
+node_modules/
+
+# --- Tooling / AI agents ---
+.agent/
+.claude/
+
+# --- Distribution / Packaging ---
+dist/
+build/
+*.egg-info/
+*.egg
+
+# --- Project data & outputs (generated at runtime) ---
+data/*.csv
+data/*.json
+models/saved/
+results/
+logs/
+
+# --- IDE / Editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints/
+
+# --- pytest / coverage ---
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# --- mypy ---
+.mypy_cache/
+
+# --- misc ---
+*.log
+*.bak
+*.tmp

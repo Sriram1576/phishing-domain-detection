@@ -1,0 +1,412 @@
+[0] ABSTRACT
+[1] Phishing websites are a major cybersecurity threat that can steal users’ login credentials, banking details, and personal information. Traditional detection methods, such as blacklists and rule-based techniques, often fail to identify newly created phishing websites.
+[2] The main objective of this project is to develop a system that can identify phishing domains accurately and help users avoid potentially harmful websites. The proposed solution uses Graph Neural Networks (GNNs) to analyze relationships between domains, IP addresses, DNS records, SSL certificates, and hyperlinks.
+[3] The methodology involves collecting website data, extracting relevant URL and domain features, constructing a graph to represent relationships, and applying a trained GNN model to classify websites as legitimate or phishing. The system will be developed using Python, PyTorch Geometric, NetworkX, Scikit-learn, and Flask.
+[4] The expected outcome is a web-based phishing detection system that provides users with quick classification results and helps identify suspicious domains, including potentially new phishing websites. The project aims to improve phishing detection by considering both website features and their relationships.
+[5] Conclusion: This project proposes a graph-based approach to phishing detection that can overcome some limitations of traditional methods. It aims to provide a reliable and scalable solution for identifying suspicious domains and improving online security.
+[7] INDEX
+[8] PAGE NO.
+[9] 1. CHAPTER 1 – INTRODUCTION						1-2
+[10] 1.1 Background and Motivation						1
+[11] 1.2 Problem Statement							1
+[12] 1.3 Objectives								1
+[13] 1.4 Purpose and Scope							2
+[14] 1.5 Major Features							2
+[15] 2. CHAPTER 2 - LITERATURE REVIEW					3-9
+[16] 2.1 Relevant Existing Work						3-4
+[17] 2.2 Comparative Analysis						4-6
+[18] 2.3 Limitations								6-7
+[19] 2.4 Relevance to the Proposed Project					7
+[20] 3. CHAPTER 3 - SYSTEM ANALYSIS					8-10
+[21] 3.1 Existing Systems & Proposed System				8
+[22] 3.2 Requirements Specification						8-9
+[23] 3.3 Hardware and Software Requirements				9-10
+[24] 4. CHAPTER 4 - SYSTEM DESIGN & SPECIFICATIONS			11-18
+[25] 4.1 High-Level Design (HLD)						11-14
+[26] 4.2 Low-Level Design (LLD)						14-16
+[27] 5. CHAPTER 5 – METHODOLOGY						17
+[28] 5.1 Work Flow								17
+[29] 6. CHAPTER 6 – IMPLEMENTATION					18-27
+[30] 6.1 Implementation Environment					18-19
+[31] 6.2 Modules								19
+[32] 6.3 Major Technical Components & Code Logic				20-25
+[33] 6.4 Screenshots								26-27
+[34] 7. CHAPTER 7 – TESTING							28-29
+[35] 7.1 Testing Strategy							28
+[36] 7.2 Test Case Execution Summary					28-29
+[37] 8. CHAPTER 8 - RESULTS AND DISCUSSION				30
+[38] 8.1 Observations							30
+[39] 9. CHAPTER 9 - CONCLUSION, LIMITATIONS & FUTURE SCOPE	31
+[40] LIST OF TABLES
+[41] TABLE NO.			DESCRIPTION				PAGENO.
+[42] Table 2.1 		Comparative Analysis Table				4-6
+[43] Table 7.1 		Test Case Execution Summary				28-29
+[44] Table 8.1		 Experimental Results & Model Comparison		30
+[74] LIST OF FIGURES
+[75] Fig No.			DESCRIPTION			PAGE NO.
+[76] Figure 4.1 		Context Diagram					12
+[77] Figure 4.2		Level-1 DFD						12
+[78] Figure 4.3			Graph Engine & Inference Pipeline			13
+[79] Figure 4.4 		Workflow of the proposed phishing 			15
+[80] detection and model evaluation pipeline.
+[81] Figure 5.1 		work Flow						17
+[82] Figure 6.1 		Homa Page						26
+[83] Figure 6.2 		Input Page						26
+[84] Figure 6.3 		Output  Page						27
+[87] 1. INTRODUCTION
+[88] 1.1 Background and Motivation
+[89] Most online services rely on web browsers as the primary interface for banking, shopping, and enterprise work. Attackers exploit this reliance through phishing pages that visually mimic genuine login portals. Historically, organizations guarded against these attacks by maintaining blacklists of verified malicious domains. However, modern attackers automate domain generation and use disposable cloud hosting, meaning a phishing link might only stay active for a few hours. By the time a victim reports the page and a blacklist administrator flags it, the attack has already succeeded. Machine learning approaches that only examine the text of a URL also fall short, as attackers can easily craft URLs that look clean and contain no suspicious keywords. To reliably identify these threats before they are blacklisted, we need to inspect the underlying infrastructure that supports them.
+[90] 1.2 Problem Statement
+[91] Phishing detection based purely on static rules or isolated URL strings ignores the network relationships that connect malicious operations. Attackers repeatedly reuse specific DNS nameservers, register multiple domains through the same registrar accounts, and host pages across shared IP subnets. Evaluating a URL in isolation throws away this relational context. Our goal is to model these network entities into a connected graph and use Graph Neural Networks (GNNs) to classify whether a target domain is legitimate or phishing in real time.
+[92] 1.3 Objectives
+[93] Build an automated backend pipeline that queries live DNS, WHOIS, and SSL data for any submitted URL.
+[94] Model these entities and their interactions as heterogeneous star graphs using NetworkX.
+[95] Train and fine-tune a Graph Convolutional Network in PyTorch Geometric that achieves at least 95% accuracy.
+[96] Keep the entire verification process under a 2 to 3 second response window so that it works seamlessly for everyday users.
+[97] Benchmark the GNN against baseline tabular models like Random Forest and XGBoost to evaluate the impact of graph structures.
+[98] Create an easy-to-use web interface backed by Flask and SQLite to display predictions, confidence scores, and historical lookups.
+[99] 1.4 Purpose and Scope
+[100] Purpose: To provide a practical, AI-driven security tool that allows individuals and system administrators to check suspicious URLs before interacting with them.
+[101] In Scope:
+[102] Collecting balanced datasets from public repositories (PhishTank, OpenPhish, Tranco/Kaggle).
+[103] Real-time network extraction (DNS lookups, socket-level SSL checks, WHOIS parsing).
+[104] Graph construction, PyG tensor conversion, and model inference.
+[105] Web interface with instant risk feedback and a local SQLite database for history logging.
+[106] Out of Scope:
+[107] Full-page DOM scraping and dynamic headless browser rendering.
+[108] Browser extensions or email client integration.
+[109] Distributed cloud deployment or high-throughput enterprise network gateway integration.
+[110] 1.5 Major Features
+[111] Live Feature Extraction: Gathers lexical, DNS, WHOIS, and SSL attributes on the fly when a link is submitted.
+[112] Graph Modeling: Represents domains, IP addresses, nameservers, and registrars as connected nodes rather than flat table rows.
+[113] History Dashboard: Retains an audit trail of past queries and risk levels in a local SQLite database for easy reference.
+[114] 2. LITERATURE REVIEW
+[115] A review of classical heuristic, machine learning, and emerging graph-based detection approaches reveals key performance patterns and architectural limitations across current domain classification methods.
+[116] 2.1 Relevant Existing Work
+[117] Prior research in phishing detection spans four primary technical paradigms: lexical URL heuristics, network infrastructure analysis, visual page inspection, and graph-based representation learning.
+[118] 1. Lexical and Natural Language Processing Heuristics
+[119] Early automated approaches focused on extracting features directly from the raw text of the URL without making external network calls.
+[120] Marchal et al. (2014) introduced PhishStorm, a streaming analytics pipeline designed to evaluate lexical features at wire speed. The authors demonstrated that character distributions, token positioning, and vocabulary anomalies can differentiate malicious links in high-throughput traffic.
+[121] 2. DNS Metadata and Hosting Infrastructure Mining
+[122] Recognizing that attackers can craft URLs that look clean and unthreatening, researchers turned to analyzing the network infrastructure supporting the domain.
+[123] Al-Ahmadi (2020) examined passive DNS traffic logs using XGBoost to detect malicious domains. The study established that hosting anomalies—such as abnormally short Time-to-Live (TTL) values, rapid IP churn, and associations with low-reputation Autonomous System Numbers (ASNs)—are strong indicators of botnet Command-and-Control (C2) and credential-harvesting servers.
+[124] 3. Visual and DOM-Based Inspection
+[125] To catch deceptive landing pages that use legitimate-looking domains or clean subdomains, several systems evaluate the rendered webpage content.
+[126] Rao and Pais (2020) developed CatchPhish, a multi-modal framework that pairs URL text classification with computer vision. The system uses a headless browser to capture full-page screenshots and render the Document Object Model (DOM), applying Convolutional Neural Networks (CNNs) to detect visual impersonation of trusted brand logos and login interfaces.
+[127] 2.2 Comparative Analysis
+[130] 2.3 Limitations
+[131] Blacklists are always playing catch-up: Services like Google Safe Browsing or PhishTank only work after someone has already been targeted, reported the link, and had it verified. Because attackers can spin up new domains automatically and discard them a few hours later, these lists consistently miss zero-hour attacks during the most dangerous window.
+[132] URL text alone is too easy to disguise: Simple lexical checks—like counting hyphens, calculating string randomness, or hunting for words like "login" are trivial to bypass. Attackers can register clean, normal-looking domain names or hide the spoofed brand name deeper inside the URL path where basic filters fail to flag it.
+[133] Rendering full webpages is way too slow: Tools that open links in headless browsers to scan HTML structure or capture page screenshots take anywhere from 5 to 15 seconds per check. That makes real-time protection painful for users, and sophisticated phishing pages can easily detect automated bots and serve them blank or harmless pages instead.
+[134] 2.4 Relevance to the Proposed Project
+[135] The literature directly shaped the architectural decisions, feature choices, and trade-offs in our proposed system:
+[136] 1. Ingestion of String-Level Diagnostics
+[137] The lexical methods established by Marchal et al. and Sahingoz et al. informed the initial feature set assigned to our central URL node. We incorporated character-level Shannon entropy, special character frequencies, and digit ratios into the feature vector. However, observing how easily string-only classifiers are evaded by clean domain names led us to treat lexical attributes merely as one component of a broader node profile, rather than relying on them as the sole decision source.
+[138] 2. Relational Infrastructure Modeling
+[139] Al-Ahmadi’s findings on DNS traffic directly influenced our network extraction pipeline. Instead of evaluating a domain in isolation, our backend actively queries live A-records, authoritative nameservers, and WHOIS registration age. Crucially, rather than flattening these network attributes into a standard tabular row, our project maps them into distinct physical nodes, allowing the model to inspect the hosting environment surrounding the domain.
+[140] 3. Avoiding Content-Rendering Bottlenecks
+[141] While visual inspection frameworks like CatchPhish achieve solid detection rates, their multi-second rendering overhead and vulnerability to anti-bot cloaking scripts make them unsuitable for instant checks. By reviewing these trade-offs, we deliberately scoped our system around socket-level metadata (DNS, WHOIS, SSL handshakes). This allows our system to capture structural malice while maintaining a sub-3-second response time.
+[142] 3. SYSTEM ANALYSIS
+[143] 3.1 Existing Systems & Proposed System
+[144] 3.1.1 Existing Systems
+[145] Most desktop security products and browser plugins check incoming links against public blocklists like Google Safe Browsing or Spamhaus. When an unknown URL appears, they fall back to basic lexical checks (such as measuring the length of the string, counting hyphens, or flagging words like "login" and "verify").
+[146] These approaches have two primary flaws:
+[147] Blocklists have a noticeable lag time between when an attack launches and when it gets cataloged.
+[148] Attackers can easily circumvent lexical models by picking clean-looking domain names or using free subdomains that look completely harmless.
+[149] 3.1.2 Proposed System
+[150] Our approach shifts the focus from what the URL looks like to what it is connected to. When a user enters a link, the system gathers its network footprint in real time—who registered it, how old it is, what IP it points to, and which nameservers manage it. By passing this network structure through a Graph Convolutional Network, the system can spot malicious patterns even if the URL string itself looks completely legitimate.
+[151] 3.2 Requirements Specification
+[152] 3.2.1 Functional Requirements
+[153] Input Handling: The web interface must accept a URL string, check that it follows valid web syntax, and strip away protocol headers to isolate the domain.
+[154] Live Extraction: The backend must query DNS servers for A and NS records, fetch WHOIS creation and expiry dates, and establish an SSL handshake to inspect certificate validity.
+[155] Graph Generation: The system must construct an in-memory graph connecting the domain to its resolved IP, its nameserver, and its registrar using NetworkX.
+[156] PyG Formatting: The system must convert the NetworkX graph into an edge list tensor and node feature tensor suitable for PyTorch Geometric.
+[157] Classification: The trained GCN model must evaluate the graph tensors and output whether the link is Legitimate or Phishing, alongside a confidence percentage.
+[158] 3.2.2 Non-Functional Requirements
+[159] Latency: Total processing time—from clicking "Detect" to seeing the result must stay between 2 and 3 seconds under normal network conditions.
+[160] Accuracy: The trained model must maintain an overall detection accuracy of at least 95% on unseen test data.
+[161] Fault Tolerance: If an external WHOIS or DNS query times out, the feature extractor must insert neutral fallback values rather than throwing an unhandled exception.
+[162] Security: All user input must be sanitized to guard against cross-site scripting (XSS), and database queries must use parameterized calls to prevent SQL injection.
+[163] Portability: The entire system must run on standard Windows or Linux setups using Python 3.11+ without needing specialized proprietary drivers.
+[164] 3.3 Hardware and Software Requirements
+[165] 3.3.1 Hardware Requirements
+[166] Processor: Intel Core i5/i7 (11th Gen or newer) or AMD Ryzen 5/7.
+[167] Memory: At least 8 GB of RAM (16 GB recommended for handling training batches smoothly).
+[168] Storage: 20 GB of available SSD storage for datasets, environment files, and SQLite records.
+[169] Network: Stable internet connection for socket connections to DNS and WHOIS servers.
+[171] 3.3.2 Software Requirements
+[172] Operating System: Windows 10/11.
+[173] Language & Runtime: Python 3.11+.
+[174] Machine Learning & Graph Libraries: PyTorch 2.x, PyTorch Geometric, NetworkX, Scikit-learn, NumPy, Pandas.
+[175] Networking Tools: dnspython, python-whois, tldextract, cryptography.
+[176] Backend: Flask 3.x.
+[177] Database: SQLite 3.
+[178] Frontend: HTML5, CSS3, vanilla JavaScript (Fetch API).
+[179] Development Environment: VS Code, Git.
+[194] 4. SYSTEM DESIGN & SPECIFICATIONS
+[195] The process of system design refers to the design of procedures that will enable interaction of different elements within a system. In relation to this particular project, the process of system design is all about developing an effective way of communicating with users such as in the process of logging in, input and output of information.
+[196] 4.1 High-Level Design (HLD)
+[197] 4..1.1 Architecture
+[198] The project follows a standard three-tier architecture:
+[199] [ User Web Browser (HTML5 / CSS3 / JavaScript) ]
+[200] │
+[201] HTTP POST /api/detect {"url": "..."}
+[202] ▼
+[203] [ Flask REST Application Layer ]
+[204] ├── URL Parser & Sanitizer (tldextract)
+[205] ├── Live Feature Collector (DNS, WHOIS, SSL)
+[206] ├── Graph Builder (NetworkX)
+[207] └── GNN Inference Engine (PyTorch Geometric)
+[208] │                              │
+[209] ▼                              ▼
+[210] [ SQLite Database ]   [ Model Weights & Scaler ]
+[211] (History & Logs)                (gcn_model.pt & scaler.pkl)
+[212] Presentation Layer: A single-page dashboard where users paste a URL and immediately view risk indicators, confidence bars, and lookup history.
+[213] Application Layer: A Flask server that receives the request, runs the network lookups, builds the graph, and passes the tensors through our GCN model.
+[214] Data Layer: An SQLite database that stores lookup logs and timestamps, alongside local model weight files.
+[215] 4.1.2 Data Flow Diagrams
+[216] Level-0 DFD (Context Diagram)
+[217] Figure 4.1 Context Diagram
+[226] Level-1 DFD
+[227] Figure 4.2 Level-1 DFD
+[228] Level-2 DFD (Graph Engine & Inference Pipeline)
+[230] Figure 4.3 Graph Engine & Inference Pipeline
+[235] 4.1.3 ER Diagram
+[248] 4.2 Low-Level Design (LLD)
+[249] 4.2.1 Process Specifications(Algorithms/Pseudocode)
+[250] Algorithm 1: Real-Time Dynamic Heterogeneous Graph Construction
+[251] Algorithm: BuildHeterogeneousDomainGraph
+[252] Input: Feature dictionary F containing {fqdn, ip, ns, registrar, lexical_vector, age, ttl, ssl_valid}
+[253] Output: PyTorch Geometric Data object D = (X, E)
+[254] 1:  Initialize an empty directed graph G using NetworkX: G ← Graph()
+[255] 2:  Define Node IDs:
+[256] 3:      ID_URL ← 0
+[257] 4:      ID_IP  ← 1
+[258] 5:      ID_NS  ← 2
+[259] 6:      ID_REG ← 3
+[260] 7:
+[261] 8:  Construct Feature Vectors:
+[262] 9:      X_url ← Normalize([F.length, F.entropy, F.digit_ratio, F.special_char_count])
+[263] 10:     X_ip  ← Normalize([Hash(F.ip) % 1000, F.ttl, ConvertASN(F.ip)])
+[264] 11:     X_ns  ← Normalize([Hash(F.ns) % 1000, F.ttl])
+[265] 12:     X_reg ← Normalize([F.age, F.ssl_valid, Hash(F.registrar) % 1000])
+[266] 13:
+[267] 14:     Pad vectors X_url, X_ip, X_ns, X_reg with one-hot entity type indicators to uniform dimension d = 16
+[268] 15:
+[269] 16: Add nodes with attributes to G:
+[270] 17:     G.add_node(ID_URL, x=X_url)
+[271] 18:     G.add_node(ID_IP,  x=X_ip)
+[272] 19:     G.add_node(ID_NS,  x=X_ns)
+[273] 20:     G.add_node(ID_REG, x=X_reg)
+[274] 21:
+[275] 22: Add directed relational edges:
+[276] 23:     G.add_edge(ID_URL, ID_IP,  relation="RESOLVES_TO")
+[277] 24:     G.add_edge(ID_URL, ID_NS,  relation="DELEGATED_TO")
+[278] 25:     G.add_edge(ID_URL, ID_REG, relation="REGISTERED_BY")
+[279] Algorithm 2: GCN Forward Propagation and Inference
+[280] Algorithm: GCNForwardInference
+[281] Input: Pre-trained weights {W1, W2, W_fc, B1, B2, B_fc}, Input graph D = (X, E)
+[282] Output: Predicted Class C ∈ {Legitimate, Phishing}, Calibrated Probability P
+[283] 1:  Extract node features X ∈ R^(4 x 16) and edge index E ∈ R^(2 x 10)
+[284] 2:  Compute augmented degree matrix D_hat where D_hat(i, i) = 1 + Sum_j (E(i, j))
+[285] 3:  Compute normalized symmetric adjacency matrix:
+[286] 4:      A_norm = D_hat^(-1/2) * A_hat * D_hat^(-1/2)
+[287] 5:
+[288] 6:  // Layer 1: Graph Convolution & Feature Transformation
+[289] 7:  H1 = A_norm * X * W1
+[290] 8:  H1 = BatchNormalization(H1)
+[291] 9:  H1 = ReLU(H1)
+[292] 10:
+[293] 11: // Layer 2: Relational Aggregation
+[294] 12: H2 = A_norm * H1 * W2
+[295] 13: H2 = BatchNormalization(H2)
+[296] 14: H2 = ReLU(H2)
+[297] 15:
+[298] 16: // Global Readout: Graph-Level Summary Vector
+[299] 17: h_graph = (1 / 4) * Sum_{i=0}^{3} (H2[i, :])   // Global Mean Pooling
+[300] 18:
+[301] 19: // Linear Projection Head & Softmax
+[302] 20: Z = h_graph * W_fc + B_fc                       // Logits in R^2
+[303] 21: Probabilities = Softmax(Z)                      // [P(Legitimate), P(Phishing)]
+[304] 22:
+[305] 23: IF Probabilities[1] >= 0.50 THEN
+[306] 24:     C ← "Phishing"
+[308] 5. METHODOLOGY
+[309] 5.1 Work Flow
+[310] The overall end-to-end workflow operates in two distinct phases: Offline Training & Optimization and Real-Time Online Inference.
+[312] Figure 5.1 work Flow
+[316] 6. IMPLEMENTATION
+[317] In this section, we describe how the real-time phishing detection system was developed, set up, and tied together into an end-to-end application. We cover our development environment, break down each functional module, explain the key code logic that powers the system, and provide representative terminal and interface outputs.
+[318] 6.1 Implementation Environment
+[319] We built and tested the system locally on a standard modern PC setup to ensure that feature extraction and model inference run smoothly without requiring dedicated server-grade hardware.
+[320] Hardware Configuration:
+[321] Processor: 11th Gen Intel Core i5 (6 cores, 12 threads @ 2.60 GHz)
+[322] RAM: 16 GB DDR4
+[323] Storage: 512 GB NVMe SSD (ensuring quick read/write access for SQLite query logging)
+[324] Network: Standard broadband connection (low-latency socket connections are critical for external DNS and WHOIS queries)
+[325] Software & Toolchain:
+[326] Operating System: Windows 11 Home / Ubuntu 22.04 LTS (WSL2 environment)
+[327] Language & Runtime: Python 3.11.8
+[328] Editor / IDE: Visual Studio Code with Python, Pylance, and SQLite extensions
+[329] Core Libraries:
+[330] Graph & Deep Learning: torch (v2.1.2), torch_geometric (v2.4.0), networkx (v3.2.1)
+[331] Machine Learning & Processing: scikit-learn (v1.3.2), pandas, numpy
+[332] Network Inspection: dnspython (v2.4.2), python-whois (v0.8.0), tldextract (v5.1.1)
+[333] Backend & Persistence: Flask (v3.0.0), Flask-CORS, sqlite3
+[334] Frontend: HTML5, CSS3, Vanilla JavaScript (ES6+ Fetch API)
+[335] 6.2 Modules
+[336] URL Pre-processing & Sanitization (sanitizer.py): Validates the incoming string, strips out query garbage or dangerous characters that could cause script injections, and extracts the domain name cleanly using tldextract.
+[337] Live Feature Extractor (extractor.py): Handles live socket connections. It computes lexical metrics (like Shannon entropy and character ratios), queries DNS A/NS records, parses registry creation and expiry dates via WHOIS, and checks the SSL certificate's issuer and validity period.
+[338] Graph Synthesizer (graph_builder.py): Takes the raw dictionary from the extractor and assembles a star-graph in NetworkX. It builds dedicated nodes for the domain, resolved IP, nameserver, and registrar, hooks them together with relational edges, and exports them directly as PyTorch Geometric Data tensors.
+[339] GCN Inference Engine (model.py & predict.py): Loads our trained model weights (gcn_model.pt) and the feature scaler (scaler.pkl). It runs the graph tensors through our two-layer GCN, applies global mean pooling, and outputs the final classification and confidence score.
+[340] Flask Backend & Web Dashboard (app.py, templates/, static/): A lightweight Flask app that serves the interface, handles the /api/detect POST requests, updates the SQLite database (phish_detection.db), and returns formatted JSON data to update the browser in real time.
+[344] 6.3 Major Technical Components & Code Logic
+[345] 1. Live Network Feature Extractor
+[346] Python
+[347] python main.py generate-data    # Collect real or generate synthetic domains
+[348] python main.py train            # Train RGCN + baseline models
+[349] python main.py evaluate         # Show evaluation results
+[350] python main.py serve            # Start Flask REST API
+[351] python main.py analyze --domain example.com   # Quick heuristic analysis
+[352] python main.py infer --domain example.com     # Full GNN inference pipeline
+[353] """
+[355] import argparse
+[356] import logging
+[357] import os
+[358] import sys
+[359] from pathlib import Path
+[360] from typing import Any, Dict
+[362] import yaml
+[363] PROJECT_ROOT = Path(_file_).resolve().parent
+[364] if str(PROJECT_ROOT) not in sys.path:
+[365] sys.path.insert(0, str(PROJECT_ROOT))
+[367] BANNER = """
+[368] PhishNet-GNN v{version}
+[369] Real-Time Phishing Domain Detection via Graph Neural Networks
+[370] Architecture: Heterogeneous Graph (Domain-IP-NS) + RGCN
+[371] """
+[372] def load_config(config_path=None):
+[373] """Load the YAML configuration file."""
+[374] if config_path is None:
+[375] config_path = PROJECT_ROOT / "config.yaml"
+[376] config_path = Path(config_path)
+[377] if not config_path.exists():
+[378] raise FileNotFoundError(f"Config not found: {config_path}")
+[379] with open(config_path, "r", encoding="utf-8") as fh:
+[380] return yaml.safe_load(fh)
+[383] def setup_logging(config):
+[384] """Configure project-wide logging."""
+[385] logs_dir = PROJECT_ROOT / config.get("paths", {}).get("logs_dir", "logs/")
+[386] logs_dir.mkdir(parents=True, exist_ok=True)
+[387] log_file = logs_dir / "phishnet.log"
+[388] logging.basicConfig(
+[389] level=logging.INFO,
+[390] format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+[391] datefmt="%Y-%m-%d %H:%M:%S",
+[392] handlers=[
+[393] logging.StreamHandler(sys.stdout),
+[394] logging.FileHandler(str(log_file), encoding="utf-8"),
+[395] ],
+[396] )
+[397] logger = logging.getLogger("PhishNet-GNN")
+[398] logger.info("Logging initialised - log file: %s", log_file)
+[399] return logger
+[400] def ensure_directories(config):
+[401] """Create all required output directories."""
+[402] for key in ['output_dir']:
+[403] d = config.get('data', {}).get(key, 'data/')
+[404] (PROJECT_ROOT / d).mkdir(parents=True, exist_ok=True)
+[405] for key in ['models_dir', 'results_dir', 'logs_dir']:
+[406] d = config.get('paths', {}).get(key, '')
+[407] if d:
+[408] (PROJECT_ROOT / d).mkdir(parents=True, exist_ok=True)
+[409] def cmd_generate_data(args, config, logger):
+[410] """Collect real datasets or generate synthetic domains."""
+[411] logger.info("Starting data collection...")
+[413] from src.data.dataset_collector import DatasetCollector
+[415] data_cfg = config.get("data", {})
+[416] 2. Dynamic Graph Builder
+[417] Python
+[418] import os
+[419] import sys
+[420] import yaml
+[421] import json
+[422] import logging
+[423] import torch
+[425] # Initialize minimal logger
+[426] logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+[428] def verify_setup():
+[429] print("=" * 60)
+[430] print("VERIFYING DGL & PYTORCH ENVIRONMENT")
+[431] print("=" * 60)
+[433] try:
+[434] import dgl
+[435] import networkx
+[436] import sklearn
+[437] except ImportError as e:
+[438] print(f"FAILED TO IMPORT: {e}")
+[439] print("Please ensure you are in the Python 3.11 virtual environment with DGL installed.")
+[440] sys.exit(1)
+[442] print(f"PyTorch Version: {torch._version_}")
+[443] print(f"DGL Version:     {dgl._version_}")
+[444] print("Imports successful!")
+[445] print("\n")
+[447] def verify_pipeline():
+[448] print("=" * 60)
+[449] print("VERIFYING GRAPH CONSTRUCTION & TRAINING")
+[450] print("=" * 60)
+[452] # Imports inside to rely on local project structure
+[453] import pandas as pd
+[454] from src.models.trainer import PhishNetTrainer
+[455] from src.graph.graph_builder import DomainGraphBuilder
+[457] with open('config.yaml', 'r') as f:
+[458] config = yaml.safe_load(f)
+[460] trainer = PhishNetTrainer(config)
+[462] # Load dataset using the trainer pipeline (no separate CSVs needed)
+[463] print("0. Loading dataset via trainer pipeline...")
+[464] df = trainer.load_dataset()
+[465] print(f"   Dataset: {len(df)} domains ({(df['label']==1).sum()} phishing, {(df['label']==0).sum()} benign)")
+[467] # Resolve DNS using the trainer pipeline
+[468] print("   Resolving DNS (cached)...")
+[469] dns_df = trainer.resolve_dns(df)
+[471] # Extract features using the trainer pipeline
+[472] print("   Extracting features...")
+[473] features_df = trainer.extract_features(df, dns_df)
+[474] # Test Graph Builder directly
+[475] print("1. Testing Graph Builder...")
+[476] g, builder, feature_cols = trainer.build_graph(df, dns_df, features_df)
+[477] print(f"   Node Types: {g.ntypes}")
+[478] print(f"   Canonical Edge Types: {g.canonical_etypes}")
+[479] feat_shape = g.nodes['domain'].data['feat'].shape
+[480] print(f"   Domain Features Shape: {feat_shape} (Expected: [N, 21])")
+[481] # Print edge counts
+[482] print("   Edge Counts:")
+[483] for etype in g.canonical_etypes:
+[484] print(f"     {etype}: {g.num_edges(etype)}")
+[485] # Save features for inference caching (Fix 6)
+[486] features_cache_path = os.path.join(trainer.models_dir, 'domain_features.csv')
+[487] features_with_domain = features_df[['domain'] + feature_cols].copy()
+[488] 6.4 Screenshots
+[504] 7. TESTING
+[505] 7.1 Testing Strategy
+[506] Unit testing is performed to check whether each individual module of the phishing detection system works correctly. In this project, separate testing is carried out for URL validation, feature extraction, graph construction, and the GNN model to ensure that each component performs its intended function. The Flask application is also tested to verify that it accepts website URLs and displays the classification results properly. This testing helps identify errors at an early stage and ensures that all modules work as expected before integrating them into the complete system.
+[508] 7.2 Test Case Execution Summary
+[516] 8. RESULTS AND DISCUSSION
+[517] We compared our Graph Convolutional Network against two widely used baseline classifiers (Random Forest and XGBoost) trained on the same data using flat tabular features:
+[520] 8.1 Observations
+[521] Handling Deceptive URLs: Baseline tabular models were often fooled by zero-day domains that looked realistic lexically (for example, chase-security-verify-login.com). The GCN correctly identified these links because it looked beyond the string: the domain was registered only three days prior, pointed to an untrusted IP range, and had mismatched SSL issuer details.
+[522] Detecting Hijacked Sites: Sometimes attackers compromise old, legitimate websites and host phishing folders inside them. Lexical models often miss these because the root domain has an established age. Our GCN flagged several of these cases by detecting anomalies between the host IP and the SSL certificate issuer.
+[523] Addressing Network Bottlenecks: External WHOIS queries over port 43 cause major latency spikes, but adding an in-memory cache for common domains cut repeat scan times down to 0.25 seconds
+[524] 9. CONCLUSION, LIMITATIONS & FUTURE SCOPE
+[525] 9.1 Conclusion
+[526] In this project, we built a functional phishing detection system that uses Graph Neural Networks to analyze the infrastructure behind suspicious links[cite: 1]. By modeling relationships between URLs, IP addresses, nameservers, and registrars, our system learns behavioral patterns that bypass traditional blacklists and flat lexical classifiers.
+[527] Using PyTorch Geometric, NetworkX, and Flask, our model achieved a test accuracy of 96.85% and an average response time of 2.16 seconds, proving that graph learning can be practical, accurate, and fast enough for day-to-day web protection.
+[528] 9.2 Limitations
+[529] Dependence on Third-Party Lookups: Because the system performs live DNS and WHOIS checks, rate limits or outages on external servers can slow down feature extraction.
+[530] Proxy and CDN Masking: Cloudflare and similar CDNs sit between the user and the true server, masking the real hosting IP and nameserver behind generic proxy addresses.
+[531] Ephemeral Single-Use Infrastructure: Attackers deploying links on free cloud hosting platforms (such as basic Firebase or Netlify subdomains) generate sparse graphs with minimal neighborhood context.
+[532] 9.3 Future Scope
+[533] Graph Attention Networks (GAT): Upgrading the GCN to an attention-based model (like GAT or HAN) to automatically assign higher weights to critical relationships (such as nameserver changes) over less informative ones.
+[534] Lightweight HTML Inspection: Adding quick checks for website favicons and page title tags into the node features to catch branded landing page spoofs.
+[535] Browser Extension: Porting the client-side tool into a Chrome/Firefox extension that automatically checks links before the browser navigates to them.
+[536] Continuous Updates: Building an automated worker script that pulls daily feeds from OpenPhish and PhishTank to periodically retrain the model against new attack trends.

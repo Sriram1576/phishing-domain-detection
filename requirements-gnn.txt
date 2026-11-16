@@ -1,0 +1,31 @@
+# Python 3.11 Environment Requirements for PhishNet-GNN
+
+# Core Data & ML
+numpy==1.26.4
+pandas==2.2.1
+scikit-learn==1.4.1.post1
+
+# Feature Extraction
+dnspython==2.6.1
+tldextract==5.1.2
+Levenshtein==0.25.0
+requests==2.31.0
+
+# Graph processing
+networkx==3.2.1
+
+# Deep Learning & GNN (Specifically tailored for Windows/Python 3.11)
+# PyTorch CPU version (to avoid massive CUDA downloads if GPU not available)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.1+cpu
+torchaudio==2.2.1+cpu
+torchvision==0.17.1+cpu
+
+# DGL (Deep Graph Library) - Note: Install DGL using the provided wheel repository
+--find-links https://data.dgl.ai/wheels/repo.html
+dgl==2.1.0
+
+# Flask API
+flask==3.0.2
+flask-cors==4.0.0
+waitress==3.0.0
